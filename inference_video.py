@@ -9,13 +9,26 @@ from model import efficientdet
 from utils import preprocess_image, postprocess_boxes
 from utils.draw_boxes import draw_boxes
 
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-model_path", type=str, required=True)
+    parser.add_argument("-video_path", type=str, required=True)
+    parser.add_argument("-output_video_path", type=str, default="result.mp4")
+
+    args = parser.parse_args()
+
+    return args
 
 def main():
+    args = get_args()
+
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     phi = 1
     weighted_bifpn = True
-    model_path = 'd1.h5'
+    model_path = args.model_path
     image_sizes = (512, 640, 768, 896, 1024, 1280, 1408)
     image_size = image_sizes[phi]
     # coco classes
@@ -29,8 +42,17 @@ def main():
                             score_threshold=score_threshold)
     model.load_weights(model_path, by_name=True)
 
-    video_path = 'datasets/video.mp4'
+    video_path = args.video_path
     cap = cv2.VideoCapture(video_path)
+
+    width = int(cap.get(3))
+    height = int(cap.get(4))
+
+    print("video with %dx%d ", width, height)
+
+    fourcc = cv2.VideoWriter_fourcc(*"MP4V")
+    fps = 30.0
+    out_video = cv2.VideoWriter(args.output_video_path, fourcc, fps, (width, height))
 
     while True:
         ret, image = cap.read()
@@ -58,9 +80,14 @@ def main():
 
         draw_boxes(src_image, boxes, scores, labels, colors, classes)
 
-        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        cv2.imshow('image', src_image)
-        cv2.waitKey(0)
+        # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+        # cv2.imshow('image', src_image)
+        # cv2.waitKey(0)
+        out_video.write(src_image)
+
+    cap.release()
+    out_video.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

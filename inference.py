@@ -9,13 +9,26 @@ from model import efficientdet
 from utils import preprocess_image, postprocess_boxes
 from utils.draw_boxes import draw_boxes
 
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-model_path", type=str, required=True)
+    parser.add_argument("-image_dir", type=str, required=True)
+    parser.add_argument("-output_image_dir", type=str, required=True)
+
+    args = parser.parse_args()
+
+    return args
+
 
 def main():
+    args = get_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     phi = 1
     weighted_bifpn = True
-    model_path = 'efficientdet-d1.h5'
+    model_path = args.model_path
     image_sizes = (512, 640, 768, 896, 1024, 1280, 1408)
     image_size = image_sizes[phi]
     # coco classes
@@ -29,7 +42,7 @@ def main():
                             score_threshold=score_threshold)
     model.load_weights(model_path, by_name=True)
 
-    for image_path in glob.glob('datasets/VOC2007/JPEGImages/*.jpg'):
+    for image_path in glob.glob(args.image_dir):
         image = cv2.imread(image_path)
         src_image = image.copy()
         # BGR -> RGB
@@ -53,9 +66,10 @@ def main():
 
         draw_boxes(src_image, boxes, scores, labels, colors, classes)
 
-        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        cv2.imshow('image', src_image)
-        cv2.waitKey(0)
+        # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+        # cv2.imshow('image', src_image)
+        # cv2.waitKey(0)
+        cv2.imwrite(args.output_image_dir+image_path, src_image)
 
 
 if __name__ == '__main__':
