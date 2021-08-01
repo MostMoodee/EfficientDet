@@ -69,6 +69,7 @@ def main():
         # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         # cv2.imshow('image', src_image)
         # cv2.waitKey(0)
+        image_path = "out"+image_path.split("/")[-1]
         cv2.imwrite(args.output_image_dir+image_path, src_image)
 
 
